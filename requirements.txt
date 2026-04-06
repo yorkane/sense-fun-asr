@@ -8,3 +8,4 @@ soundfile
 ffmpeg-python
 modelscope
 numpy
+huggingface-hub
