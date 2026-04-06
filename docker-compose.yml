@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sense-fun-asr:
+    build: .
+    container_name: sense-fun-asr
+    restart: always
+    environment:
+      - ASR_MODEL_DIR=/app/data/models/SenseVoiceSmall
+      - VAD_MODEL_DIR=/app/data/models/Fsmn-Vad
+      - BATCH_SIZE=16
+    ports:
+      - "7880:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./app_data:/app/data
