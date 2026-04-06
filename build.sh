@@ -46,5 +46,20 @@ print('FSMN-VAD copied successfully.')
 "
 
 echo "====================================="
-echo "Build complete. Models are exported to $MODELS_DIR."
-echo "You can now run 'docker-compose up -d --build'."
+echo "4. Building Docker Image (ghcr.io/yorkane/sense-fun-asr:latest)..."
+
+# Support running with or without sudo wrapper for Docker depending on the user group
+if command -v docker &> /dev/null; then
+    if groups | grep -q '\bdocker\b' || [ "$(id -u)" -eq 0 ]; then
+        docker build -t ghcr.io/yorkane/sense-fun-asr:latest .
+    else
+        sudo docker build -t ghcr.io/yorkane/sense-fun-asr:latest .
+    fi
+else
+    echo "Docker is not installed! Please install Docker first."
+    exit 1
+fi
+
+echo "====================================="
+echo "Build complete. Models and Docker Image are ready."
+echo "You can now run 'sudo docker compose up -d'."

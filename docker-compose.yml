@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   sense-fun-asr:
-    build: .
+    image: ghcr.io/yorkane/sense-fun-asr:latest
     container_name: sense-fun-asr
     restart: always
     environment:
