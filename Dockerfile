@@ -1,44 +1,35 @@
-FROM nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04
+FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+WORKDIR /app
+
+# 1. Install minimal system dependencies & clean apt cache
+# We use python slim because PyTorch wheel ships self-contained CUDA/cuDNN libraries,
+# avoiding the 2.5GB+ duplication overhead of using nvidia/cuda runtime base images.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
     ffmpeg \
     wget \
     curl \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -s /usr/bin/python3 /usr/bin/python
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+# 2. Copy requirements to maximize Docker layer cache hits
+COPY requirements.txt .
 
-# Step 1: Install PyTorch GPU (cu121). 
-# Due to ONNX Runtime fatal bugs with SenseVoice node types, we must use PyTorch natively!
-RUN pip install --no-cache-dir torch torchaudio \
-    --index-url https://download.pytorch.org/whl/cu121
+# 3. Install heavy dependencies (PyTorch + Core deps)
+# Any application code changes won't trigger pip re-downloads
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cu121 \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Step 2: Install core Python dependencies
-RUN pip install --no-cache-dir \
-    fastapi \
-    uvicorn \
-    gunicorn \
-    python-multipart \
-    funasr \
-    ffmpeg-python \
-    modelscope \
-    numpy \
-    librosa \
-    soundfile
+# 4. Prepare directories for volume mapping
+RUN mkdir -p /app/data/models /app/data/trt_cache
 
-# The models and the trt cache will be mounted from the host
-RUN mkdir -p /app/data/models
-RUN mkdir -p /app/data/trt_cache
-
+# 5. Copy the actual application code AT THE VERY END
+# This ensures that code updates only rebuild this tiny final layer without invalidating Python library layers.
 COPY ./app /app/app
 COPY ./gunicorn_conf.py /app/
 
