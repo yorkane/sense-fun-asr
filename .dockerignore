@@ -1,0 +1,4 @@
+app_data/
+test/
+build_*.txt
+output*.txt
