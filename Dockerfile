@@ -2,6 +2,8 @@ FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 WORKDIR /app
 
@@ -25,8 +27,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cu121 \
     && pip install --no-cache-dir -r requirements.txt
 
-# 4. Prepare directories for volume mapping
+# 4. Prepare directories and bake models into the image
 RUN mkdir -p /app/data/models /app/data/trt_cache
+COPY ./download_models.py .
+RUN python3 download_models.py
 
 # 5. Copy the actual application code AT THE VERY END
 # This ensures that code updates only rebuild this tiny final layer without invalidating Python library layers.

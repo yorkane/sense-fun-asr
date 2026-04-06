@@ -6,6 +6,7 @@ services:
     container_name: sense-fun-asr
     restart: always
     environment:
+      - CUDA_VISIBLE_DEVICES=0
       - ASR_MODEL_DIR=/app/data/models/SenseVoiceSmall
       - VAD_MODEL_DIR=/app/data/models/Fsmn-Vad
       - BATCH_SIZE=16
@@ -18,5 +19,3 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    volumes:
-      - ./app_data:/app/data
